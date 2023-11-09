@@ -2,103 +2,90 @@
 
 namespace app\models;
 
-class User extends \yii\base\BaseObject implements \yii\web\IdentityInterface
+use Yii;
+
+/**
+ * This is the model class for table "user".
+ *
+ * @property int $id
+ * @property string $nickname
+ * @property string $first_name
+ * @property string $last_name
+ * @property string $email
+ * @property string $password
+ * @property string|null $created_at
+ * @property string|null $updated_at
+ *
+ * @property UserGame[] $userGames
+ * @property UserProfile[] $userProfiles
+ * @property Wishlist[] $wishlists
+ */
+class User extends \yii\db\ActiveRecord
 {
-    public $id;
-    public $username;
-    public $password;
-    public $authKey;
-    public $accessToken;
-
-    private static $users = [
-        '100' => [
-            'id' => '100',
-            'username' => 'root',
-            'password' => 'root',
-            'authKey' => 'test100key',
-            'accessToken' => '100-token',
-        ],
-        '101' => [
-            'id' => '101',
-            'username' => 'demo',
-            'password' => 'demo',
-            'authKey' => 'test101key',
-            'accessToken' => '101-token',
-        ],
-    ];
-
-
     /**
      * {@inheritdoc}
      */
-    public static function findIdentity($id)
+    public static function tableName()
     {
-        return isset(self::$users[$id]) ? new static(self::$users[$id]) : null;
+        return 'user';
     }
 
     /**
      * {@inheritdoc}
      */
-    public static function findIdentityByAccessToken($token, $type = null)
+    public function rules()
     {
-        foreach (self::$users as $user) {
-            if ($user['accessToken'] === $token) {
-                return new static($user);
-            }
-        }
-
-        return null;
+        return [
+            [['nickname', 'first_name', 'last_name', 'email', 'password'], 'required'],
+            [['created_at', 'updated_at'], 'safe'],
+            [['nickname', 'first_name', 'last_name', 'email', 'password'], 'string', 'max' => 255],
+        ];
     }
 
     /**
-     * Finds user by username
+     * {@inheritdoc}
+     */
+    public function attributeLabels()
+    {
+        return [
+            'id' => 'ID',
+            'nickname' => 'Nickname',
+            'first_name' => 'First Name',
+            'last_name' => 'Last Name',
+            'email' => 'Email',
+            'password' => 'Password',
+            'created_at' => 'Created At',
+            'updated_at' => 'Updated At',
+        ];
+    }
+
+    /**
+     * Gets query for [[UserGames]].
      *
-     * @param string $username
-     * @return static|null
+     * @return \yii\db\ActiveQuery
      */
-    public static function findByUsername($username)
+    public function getUserGames()
     {
-        foreach (self::$users as $user) {
-            if (strcasecmp($user['username'], $username) === 0) {
-                return new static($user);
-            }
-        }
-
-        return null;
+        return $this->hasMany(UserGame::class, ['user_id' => 'id']);
     }
 
     /**
-     * {@inheritdoc}
-     */
-    public function getId()
-    {
-        return $this->id;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getAuthKey()
-    {
-        return $this->authKey;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function validateAuthKey($authKey)
-    {
-        return $this->authKey === $authKey;
-    }
-
-    /**
-     * Validates password
+     * Gets query for [[UserProfiles]].
      *
-     * @param string $password password to validate
-     * @return bool if password provided is valid for current user
+     * @return \yii\db\ActiveQuery
      */
-    public function validatePassword($password)
+    public function getUserProfiles()
     {
-        return $this->password === $password;
+        return $this->hasMany(UserProfile::class, ['user_id' => 'id']);
+    }
+
+    /**
+     * Gets query for [[Wishlists]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getWishlists()
+    {
+        return $this->hasMany(Wishlist::class, ['user_id' => 'id']);
     }
 }
